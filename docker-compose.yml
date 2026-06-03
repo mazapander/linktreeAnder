@@ -1,19 +1,19 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: linktree_db
-    environment:
-      POSTGRES_USER: linktree
-      POSTGRES_PASSWORD: linktree_secret
-      POSTGRES_DB: linktree
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - linktree_network
-    restart: unless-stopped
-
+  #db:
+  #  image: postgres:15-alpine
+  #  container_name: linktree_db
+  #  environment:
+  #    POSTGRES_USER: linktree
+  #    POSTGRES_PASSWORD: linktree_secret
+  #    POSTGRES_DB: linktree
+  #  volumes:
+  #    - postgres_data:/var/lib/postgresql/data
+  #  networks:
+  #    - edge
+  #  restart: unless-stopped
+  
   backend:
     build:
       context: ./backend
@@ -21,12 +21,10 @@ services:
     container_name: linktree_backend
     environment:
       FLASK_ENV: production
-      DATABASE_URL: postgresql://linktree:linktree_secret@db:5432/linktree
+      DATABASE_URL: postgresql://linktree:biaaapsudeipn##jnpcoaidnp39892323423@postgres-main:5432/linktree
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
-    depends_on:
-      - db
     networks:
-      - linktree_network
+      - edge
     restart: unless-stopped
 
   frontend:
@@ -37,12 +35,14 @@ services:
     depends_on:
       - backend
     networks:
-      - linktree_network
+      - apps
     restart: unless-stopped
 
 networks:
-  linktree_network:
-    driver: bridge
+  edge:
+    external: true
+  apps:
+    external: true
 
 volumes:
   postgres_data:
