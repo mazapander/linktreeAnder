@@ -1,0 +1,1 @@
+from app.models.models import Profile, Link, Click, Visit
