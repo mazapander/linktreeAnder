@@ -9,7 +9,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
     networks:
-      - edge
+      - apps
     restart: unless-stopped
 
   frontend:
@@ -24,7 +24,5 @@ services:
     restart: unless-stopped
 
 networks:
-  edge:
-    external: true
   apps:
     external: true

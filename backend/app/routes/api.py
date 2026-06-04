@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import db
-from app.models import Profile, Click, Visit
+from app.models import Profile, Click, Visit, Link
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 
