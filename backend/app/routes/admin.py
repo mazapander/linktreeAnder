@@ -5,7 +5,7 @@ from app.schemas import profile_schema, link_schema, links_schema
 from app.auth import require_admin
 from marshmallow import Schema, fields, validate, ValidationError
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 
 class ProfileCreateSchema(Schema):

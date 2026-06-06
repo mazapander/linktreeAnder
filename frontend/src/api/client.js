@@ -17,7 +17,7 @@ export async function getStats(slug, period = '7d') {
 }
 
 export async function createProfile(data) {
-  const res = await fetch('/admin/profiles', {
+  const res = await fetch(`${API_BASE}/admin/profiles`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ export async function createProfile(data) {
 }
 
 export async function updateProfile(slug, data) {
-  const res = await fetch(`/admin/profiles/${slug}`, {
+  const res = await fetch(`${API_BASE}/admin/profiles/${slug}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export async function updateProfile(slug, data) {
 }
 
 export async function createLink(slug, data) {
-  const res = await fetch(`/admin/profiles/${slug}/links`, {
+  const res = await fetch(`${API_BASE}/admin/profiles/${slug}/links`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export async function createLink(slug, data) {
 }
 
 export async function updateLink(slug, linkId, data) {
-  const res = await fetch(`/admin/profiles/${slug}/links/${linkId}`, {
+  const res = await fetch(`${API_BASE}/admin/profiles/${slug}/links/${linkId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export async function updateLink(slug, linkId, data) {
 }
 
 export async function deleteLink(slug, linkId) {
-  const res = await fetch(`/admin/profiles/${slug}/links/${linkId}`, {
+  const res = await fetch(`${API_BASE}/admin/profiles/${slug}/links/${linkId}`, {
     method: 'DELETE',
     headers: {
       ...getAuthHeaders()
@@ -83,7 +83,7 @@ export async function deleteLink(slug, linkId) {
 }
 
 export async function reorderLinks(slug, order) {
-  const res = await fetch(`/admin/profiles/${slug}/reorder`, {
+  const res = await fetch(`${API_BASE}/admin/profiles/${slug}/reorder`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export async function reorderLinks(slug, order) {
 }
 
 export async function getUsers() {
-  const res = await fetch('/users', {
+  const res = await fetch(`${API_BASE}/users`, {
     headers: { ...getAuthHeaders() }
   })
   if (!res.ok) throw new Error('Error fetching users')
@@ -103,7 +103,7 @@ export async function getUsers() {
 }
 
 export async function createUser(data) {
-  const res = await fetch('/users', {
+  const res = await fetch(`${API_BASE}/users`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export async function createUser(data) {
 }
 
 export async function updateUser(userId, data) {
-  const res = await fetch(`/users/${userId}`, {
+  const res = await fetch(`${API_BASE}/users/${userId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export async function updateUser(userId, data) {
 }
 
 export async function deleteUser(userId) {
-  const res = await fetch(`/users/${userId}`, {
+  const res = await fetch(`${API_BASE}/users/${userId}`, {
     method: 'DELETE',
     headers: { ...getAuthHeaders() }
   })
@@ -146,7 +146,7 @@ export async function uploadAvatar(userId, file) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch(`/users/${userId}/avatar`, {
+  const res = await fetch(`${API_BASE}/users/${userId}/avatar`, {
     method: 'POST',
     headers: { ...getAuthHeaders() },
     body: formData,
