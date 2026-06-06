@@ -1,5 +1,10 @@
 const API_BASE = '/api'
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('supabase_token')
+  return token ? { 'Authorization': `Bearer ${token}` } : {}
+}
+
 export async function getProfile(slug) {
   const res = await fetch(`${API_BASE}/profiles/${slug}`)
   if (!res.ok) throw new Error('Profile not found')
@@ -14,7 +19,10 @@ export async function getStats(slug, period = '7d') {
 export async function createProfile(data) {
   const res = await fetch('/admin/profiles', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify(data),
   })
   if (!res.ok) {
@@ -27,7 +35,10 @@ export async function createProfile(data) {
 export async function updateProfile(slug, data) {
   const res = await fetch(`/admin/profiles/${slug}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify(data),
   })
   return res.json()
@@ -36,7 +47,10 @@ export async function updateProfile(slug, data) {
 export async function createLink(slug, data) {
   const res = await fetch(`/admin/profiles/${slug}/links`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify(data),
   })
   if (!res.ok) {
@@ -49,7 +63,10 @@ export async function createLink(slug, data) {
 export async function updateLink(slug, linkId, data) {
   const res = await fetch(`/admin/profiles/${slug}/links/${linkId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify(data),
   })
   return res.json()
@@ -58,6 +75,9 @@ export async function updateLink(slug, linkId, data) {
 export async function deleteLink(slug, linkId) {
   const res = await fetch(`/admin/profiles/${slug}/links/${linkId}`, {
     method: 'DELETE',
+    headers: {
+      ...getAuthHeaders()
+    },
   })
   if (!res.ok) throw new Error('Error deleting link')
 }
@@ -65,8 +85,59 @@ export async function deleteLink(slug, linkId) {
 export async function reorderLinks(slug, order) {
   const res = await fetch(`/admin/profiles/${slug}/reorder`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     body: JSON.stringify(order),
   })
   return res.json()
+}
+
+export async function getUsers() {
+  const res = await fetch('/users', {
+    headers: { ...getAuthHeaders() }
+  })
+  if (!res.ok) throw new Error('Error fetching users')
+  return res.json()
+}
+
+export async function createUser(data) {
+  const res = await fetch('/users', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || 'Error creating user')
+  }
+  return res.json()
+}
+
+export async function updateUser(userId, data) {
+  const res = await fetch(`/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || 'Error updating user')
+  }
+  return res.json()
+}
+
+export async function deleteUser(userId) {
+  const res = await fetch(`/users/${userId}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() }
+  })
+  if (!res.ok) throw new Error('Error deleting user')
 }

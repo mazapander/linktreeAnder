@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Plus, Trash2, GripVertical, Save, BarChart3, Link2 } from 'lucide-react'
+import { Plus, Trash2, GripVertical, Save, BarChart3, Link2, LogOut, Users, UserCircle } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import * as api from '../api/client'
+import UserManagement from '../components/UserManagement'
 
 function SortableLink({ link, onDelete, onUpdate }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: link.id })
@@ -47,6 +48,7 @@ function AdminDashboard() {
   const [newLink, setNewLink] = useState({ title: '', url: '', icon: '' })
   const [stats, setStats] = useState(null)
   const [showStats, setShowStats] = useState(false)
+  const [activeTab, setActiveTab] = useState('profiles')
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -152,6 +154,12 @@ function AdminDashboard() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('supabase_token')
+    navigate('/admin', { replace: true })
+    window.location.reload()
+  }
+
   if (loading) return <div className="min-h-screen bg-gray-900 text-white p-8">Loading...</div>
 
   if (!slug) {
@@ -213,98 +221,138 @@ function AdminDashboard() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold">{profile?.name}</h1>
-            <p className="text-gray-400">links.anderdata.es/{profile?.slug}</p>
+            <h1 className="text-2xl font-bold">{profile?.name || 'Admin'}</h1>
+            <p className="text-gray-400">{profile ? `links.anderdata.es/${profile?.slug}` : 'Gestión de usuarios y perfiles'}</p>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-4 py-2"
+            >
+              <BarChart3 size={18} />
+              Stats
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-4 py-2"
+            >
+              <LogOut size={18} />
+              Salir
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-6">
           <button
-            onClick={() => setShowStats(!showStats)}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-4 py-2"
+            onClick={() => setActiveTab('profiles')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'profiles'
+                ? 'bg-accent text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
           >
-            <BarChart3 size={18} />
-            Stats
+            <UserCircle size={18} />
+            Perfiles
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'users'
+                ? 'bg-accent text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Users size={18} />
+            Usuarios
           </button>
         </div>
 
-        {showStats && stats && (
-          <div className="bg-gray-800 rounded-lg p-6 mb-8">
-            <h2 className="text-lg font-semibold mb-4">Analytics ({stats.period})</h2>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="text-gray-400 text-sm">Visits</p>
-                <p className="text-3xl font-bold">{stats.total_visits}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm">Clicks</p>
-                <p className="text-3xl font-bold">{stats.total_clicks}</p>
-              </div>
-            </div>
-            {stats.clicks_by_link?.length > 0 && (
-              <div>
-                <p className="text-gray-400 text-sm mb-2">Clicks by link</p>
-                {stats.clicks_by_link.map((c, i) => (
-                  <div key={i} className="flex justify-between py-1">
-                    <span>{c.title}</span>
-                    <span className="font-semibold">{c.clicks}</span>
+        {activeTab === 'users' ? (
+          <UserManagement />
+        ) : (
+          <>
+            {showStats && stats && (
+              <div className="bg-gray-800 rounded-lg p-6 mb-8">
+                <h2 className="text-lg font-semibold mb-4">Analytics ({stats.period})</h2>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-gray-400 text-sm">Visits</p>
+                    <p className="text-3xl font-bold">{stats.total_visits}</p>
                   </div>
-                ))}
+                  <div>
+                    <p className="text-gray-400 text-sm">Clicks</p>
+                    <p className="text-3xl font-bold">{stats.total_clicks}</p>
+                  </div>
+                </div>
+                {stats.clicks_by_link?.length > 0 && (
+                  <div>
+                    <p className="text-gray-400 text-sm mb-2">Clicks by link</p>
+                    {stats.clicks_by_link.map((c, i) => (
+                      <div key={i} className="flex justify-between py-1">
+                        <span>{c.title}</span>
+                        <span className="font-semibold">{c.clicks}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        <form onSubmit={handleAddLink} className="bg-gray-800 rounded-lg p-4 mb-8">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Link2 size={18} />
-            Add Link
-          </h2>
-          <div className="grid grid-cols-3 gap-3">
-            <input
-              type="text"
-              value={newLink.title}
-              onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-              placeholder="Title"
-              className="bg-gray-700 rounded px-3 py-2"
-              required
-            />
-            <input
-              type="url"
-              value={newLink.url}
-              onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-              placeholder="URL"
-              className="bg-gray-700 rounded px-3 py-2"
-              required
-            />
-            <input
-              type="text"
-              value={newLink.icon}
-              onChange={(e) => setNewLink({ ...newLink, icon: e.target.value })}
-              placeholder="Icon (github, twitter...)"
-              className="bg-gray-700 rounded px-3 py-2"
-            />
-          </div>
-          <button type="submit" className="mt-4 flex items-center gap-2 bg-accent hover:bg-pink-600 transition-colors rounded-lg px-4 py-2 font-semibold">
-            <Plus size={18} />
-            Add
-          </button>
-        </form>
-
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Links</h2>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={profile?.links?.map(l => l.id) || []} strategy={verticalListSortingStrategy}>
-              <div className="space-y-3">
-                {profile?.links?.map((link) => (
-                  <SortableLink
-                    key={link.id}
-                    link={link}
-                    onDelete={handleDeleteLink}
-                    onUpdate={handleUpdateLink}
-                  />
-                ))}
+            <form onSubmit={handleAddLink} className="bg-gray-800 rounded-lg p-4 mb-8">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Link2 size={18} />
+                Add Link
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  value={newLink.title}
+                  onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                  placeholder="Title"
+                  className="bg-gray-700 rounded px-3 py-2"
+                  required
+                />
+                <input
+                  type="url"
+                  value={newLink.url}
+                  onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                  placeholder="URL"
+                  className="bg-gray-700 rounded px-3 py-2"
+                  required
+                />
+                <input
+                  type="text"
+                  value={newLink.icon}
+                  onChange={(e) => setNewLink({ ...newLink, icon: e.target.value })}
+                  placeholder="Icon (github, twitter...)"
+                  className="bg-gray-700 rounded px-3 py-2"
+                />
               </div>
-            </SortableContext>
-          </DndContext>
-        </div>
+              <button type="submit" className="mt-4 flex items-center gap-2 bg-accent hover:bg-pink-600 transition-colors rounded-lg px-4 py-2 font-semibold">
+                <Plus size={18} />
+                Add
+              </button>
+            </form>
+
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Links</h2>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={profile?.links?.map(l => l.id) || []} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-3">
+                    {profile?.links?.map((link) => (
+                      <SortableLink
+                        key={link.id}
+                        link={link}
+                        onDelete={handleDeleteLink}
+                        onUpdate={handleUpdateLink}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

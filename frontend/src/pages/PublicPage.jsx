@@ -18,17 +18,22 @@ function PublicPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!slug) return
-    setLoading(true)
-    fetch(`/admin/${slug}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Profile not found')
-        return res.json()
-      })
-      .then(setProfile)
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [slug])
+  if (!slug) {
+    setLoading(false)
+    return
+  }
+
+  setLoading(true)
+
+  fetch(`/${slug}`)
+    .then(res => {
+      if (!res.ok) throw new Error('Profile not found')
+      return res.json()
+    })
+    .then(setProfile)
+    .catch(err => setError(err.message))
+    .finally(() => setLoading(false))
+}, [slug])
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center text-white">
@@ -49,7 +54,7 @@ function PublicPage() {
 
   const handleClick = async (link) => {
     try {
-      const res = await fetch(`/admin/${slug}/click/${link.id}`)
+      const res = await fetch(`/${slug}/click/${link.id}`)
       const data = await res.json()
       window.location.href = data.url
     } catch (err) {

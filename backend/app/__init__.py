@@ -25,10 +25,12 @@ def create_app(config_override=None):
     from app.routes.public import public_bp
     from app.routes.admin import admin_bp
     from app.routes.api import api_bp
+    from app.routes.users import users_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(users_bp)
 
     with app.app_context():
         db.create_all()

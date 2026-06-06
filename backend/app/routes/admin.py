@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app import db
 from app.models import Profile, Link
 from app.schemas import profile_schema, link_schema, links_schema
+from app.auth import require_admin
 from marshmallow import Schema, fields, validate, ValidationError
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -25,6 +26,7 @@ class LinkCreateSchema(Schema):
 
 
 @admin_bp.route('/profiles', methods=['POST'])
+@require_admin
 def create_profile():
     try:
         data = ProfileCreateSchema().load(request.json)
@@ -42,6 +44,7 @@ def create_profile():
 
 
 @admin_bp.route('/profiles/<slug>')
+@require_admin
 def get_profile_admin(slug):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:
@@ -50,6 +53,7 @@ def get_profile_admin(slug):
 
 
 @admin_bp.route('/profiles/<slug>', methods=['PUT'])
+@require_admin
 def update_profile(slug):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:
@@ -65,6 +69,7 @@ def update_profile(slug):
 
 
 @admin_bp.route('/profiles/<slug>/links', methods=['POST'])
+@require_admin
 def create_link(slug):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:
@@ -83,6 +88,7 @@ def create_link(slug):
 
 
 @admin_bp.route('/profiles/<slug>/links/<int:link_id>', methods=['PUT'])
+@require_admin
 def update_link(slug, link_id):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:
@@ -102,6 +108,7 @@ def update_link(slug, link_id):
 
 
 @admin_bp.route('/profiles/<slug>/links/<int:link_id>', methods=['DELETE'])
+@require_admin
 def delete_link(slug, link_id):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:
@@ -117,6 +124,7 @@ def delete_link(slug, link_id):
 
 
 @admin_bp.route('/profiles/<slug>/reorder', methods=['POST'])
+@require_admin
 def reorder_links(slug):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:
