@@ -27,10 +27,6 @@ def create_app(config_override=None):
     db.init_app(app)
     CORS(app)
 
-    @app.route('/users/avatars/<path:filename>')
-    def serve_avatar(filename):
-        return send_from_directory(UPLOAD_FOLDER, filename)
-
     from app.routes.public import public_bp
     from app.routes.admin import admin_bp
     from app.routes.api import api_bp

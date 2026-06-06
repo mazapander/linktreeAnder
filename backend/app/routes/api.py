@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models import Profile, Click, Visit, Link
+from app.auth import require_admin
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 
@@ -14,6 +15,7 @@ def list_profiles():
 
 
 @api_bp.route('/profiles/<slug>/stats')
+@require_admin
 def get_stats(slug):
     profile = Profile.query.filter_by(slug=slug).first()
     if not profile:

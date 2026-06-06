@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Login from './Login'
 
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+
 function AuthGuard({ children }) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
@@ -20,6 +22,13 @@ function AuthGuard({ children }) {
       const { data, error } = await supabase.auth.getUser(token)
 
       if (error || !data.user) {
+        localStorage.removeItem('supabase_token')
+        setLoading(false)
+        return
+      }
+
+      const userEmail = data.user.email?.toLowerCase() || ''
+      if (ADMIN_EMAILS.length > 0 && !ADMIN_EMAILS.includes(userEmail)) {
         localStorage.removeItem('supabase_token')
         setLoading(false)
         return
