@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, X, User } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Trash2, Edit2, User, Camera, X } from 'lucide-react'
 import * as api from '../api/client'
 
 function UserManagement() {
@@ -9,6 +9,9 @@ function UserManagement() {
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [formData, setFormData] = useState({ email: '', password: '', name: '' })
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     loadUsers()
@@ -29,11 +32,17 @@ function UserManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      let user
       if (editingUser) {
-        await api.updateUser(editingUser.id, formData)
+        user = await api.updateUser(editingUser.id, formData)
       } else {
-        await api.createUser(formData)
+        user = await api.createUser(formData)
       }
+
+      if (avatarFile) {
+        await api.uploadAvatar(user.id, avatarFile)
+      }
+
       await loadUsers()
       resetForm()
     } catch (err) {
@@ -44,6 +53,8 @@ function UserManagement() {
   const handleEdit = (user) => {
     setEditingUser(user)
     setFormData({ email: user.email, password: '', name: user.name || '' })
+    setAvatarFile(null)
+    setAvatarPreview(user.avatar_url || null)
     setShowForm(true)
   }
 
@@ -57,11 +68,24 @@ function UserManagement() {
     }
   }
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setAvatarFile(file)
+      setAvatarPreview(URL.createObjectURL(file))
+    }
+  }
+
   const resetForm = () => {
     setShowForm(false)
     setEditingUser(null)
     setFormData({ email: '', password: '', name: '' })
+    setAvatarFile(null)
+    setAvatarPreview(null)
     setError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   if (loading) return <div className="text-white">Cargando...</div>
@@ -92,39 +116,61 @@ function UserManagement() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-gray-700 rounded-lg p-4 mb-6 space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full bg-gray-600 rounded px-3 py-2 text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">
-                Contraseña {editingUser && '(dejar vacío para no cambiar)'}
+          <div className="flex items-start gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-20 h-20 rounded-full bg-gray-600 overflow-hidden flex items-center justify-center">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={40} className="text-gray-400" />
+                )}
+              </div>
+              <label className="cursor-pointer flex items-center gap-1 text-sm text-gray-300 hover:text-white">
+                <Camera size={14} />
+                <span>Subir foto</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
               </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-gray-600 rounded px-3 py-2 text-white"
-                required={!editingUser}
-                minLength={editingUser ? undefined : 6}
-              />
             </div>
-            <div>
-              <label className="block text-gray-300 text-sm mb-1">Nombre</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-gray-600 rounded px-3 py-2 text-white"
-                required
-              />
+            <div className="flex-1 grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-gray-300 text-sm mb-1">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full bg-gray-600 rounded px-3 py-2 text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm mb-1">
+                  Contraseña {editingUser && '(dejar vacío para no cambiar)'}
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full bg-gray-600 rounded px-3 py-2 text-white"
+                  required={!editingUser}
+                  minLength={editingUser ? undefined : 6}
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full bg-gray-600 rounded px-3 py-2 text-white"
+                  required
+                />
+              </div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -151,11 +197,20 @@ function UserManagement() {
             key={user.id}
             className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
           >
-            <div>
-              <p className="text-white font-medium">{user.email}</p>
-              <p className="text-gray-400 text-sm">
-                Creado: {new Date(user.created_at).toLocaleDateString('es-ES')}
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-600 overflow-hidden flex items-center justify-center flex-shrink-0">
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt={user.email} className="w-full h-full object-cover" />
+                ) : (
+                  <User size={24} className="text-gray-400" />
+                )}
+              </div>
+              <div>
+                <p className="text-white font-medium">{user.email}</p>
+                <p className="text-gray-400 text-sm">
+                  Creado: {new Date(user.created_at).toLocaleDateString('es-ES')}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <button

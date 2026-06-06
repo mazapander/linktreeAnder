@@ -1,94 +1,39 @@
+import os
+import uuid
 from flask import Blueprint, request, jsonify
-from app import db
 from app.auth import require_auth
-from app.models import Profile
-from marshmallow import Schema, fields, validate, ValidationError
-import supabase
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
-SUPABASE_URL = request.environ.get('SUPABASE_URL')
-SUPABASE_SERVICE_KEY = request.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads/avatars')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 
-class UserCreateSchema(Schema):
-    email = fields.Email(required=True)
-    password = fields.Str(required=True, validate=validate.Length(min=6))
-    name = fields.Str(required=True)
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@users_bp.route('', methods=['GET'])
+@users_bp.route('/<user_id>/avatar', methods=['POST'])
 @require_auth
-def list_users():
-    client = supabase.create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    response = client.auth.admin.list_users()
-    users = []
-    for user in response:
-        users.append({
-            'id': user.id,
-            'email': user.email,
-            'created_at': user.created_at,
-        })
-    return jsonify(users)
+def upload_avatar(user_id):
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
 
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
 
-@users_bp.route('', methods=['POST'])
-@require_auth
-def create_user():
-    try:
-        data = UserCreateSchema().load(request.json)
-    except ValidationError as err:
-        return jsonify({'errors': err.messages}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'File type not allowed'}), 400
 
-    client = supabase.create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    try:
-        response = client.auth.admin.create_user({
-            'email': data['email'],
-            'password': data['password'],
-            'user_metadata': {'name': data['name']}
-        })
-        user = response.user
-        return jsonify({
-            'id': user.id,
-            'email': user.email,
-            'created_at': user.created_at,
-        }), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{user_id}_{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
 
-@users_bp.route('/<user_id>', methods=['PUT'])
-@require_auth
-def update_user(user_id):
-    data = request.json
-    client = supabase.create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    file.save(filepath)
 
-    update_data = {}
-    if 'email' in data:
-        update_data['email'] = data['email']
-    if 'password' in data:
-        update_data['password'] = data['password']
-    if 'name' in data:
-        update_data['user_metadata'] = {'name': data['name']}
+    avatar_url = f"/users/avatars/{filename}"
 
-    try:
-        response = client.auth.admin.update_user_by_id(user_id, update_data)
-        user = response.user
-        return jsonify({
-            'id': user.id,
-            'email': user.email,
-            'created_at': user.created_at,
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-
-@users_bp.route('/<user_id>', methods=['DELETE'])
-@require_auth
-def delete_user(user_id):
-    client = supabase.create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    try:
-        client.auth.admin.delete_user(user_id)
-        return '', 204
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    return jsonify({'avatar_url': avatar_url})

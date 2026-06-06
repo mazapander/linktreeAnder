@@ -141,3 +141,16 @@ export async function deleteUser(userId) {
   })
   if (!res.ok) throw new Error('Error deleting user')
 }
+
+export async function uploadAvatar(userId, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`/users/${userId}/avatar`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  })
+  if (!res.ok) throw new Error('Error uploading avatar')
+  return res.json()
+}
