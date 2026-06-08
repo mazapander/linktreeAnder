@@ -3,17 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { LogIn } from 'lucide-react'
 
-function Login() {
+function Login({ error: propError }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(propError || '')
   const [loading, setLoading] = useState(false)
+
+  console.log('[Login] Component rendered, supabase url:', import.meta.env.VITE_SUPABASE_URL ? 'SET' : 'NOT SET')
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    console.log('[Login] Attempting login for:', email)
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -21,14 +25,20 @@ function Login() {
     })
 
     if (authError) {
+      console.error('[Login] Auth error:', authError.message)
       setError(authError.message)
       setLoading(false)
       return
     }
 
     if (data?.session) {
+      console.log('[Login] Login successful, storing token')
       localStorage.setItem('supabase_token', data.session.access_token)
       navigate('/admin')
+    } else {
+      console.warn('[Login] No session data returned')
+      setError('Error al iniciar sesión')
+      setLoading(false)
     }
   }
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from app import db
 from app.models import Profile, Click, Visit, Link
 from app.auth import require_admin
@@ -6,6 +6,14 @@ from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
+
+
+@api_bp.route('/config')
+def get_config():
+    return jsonify({
+        'admin_emails': (current_app.config.get('ADMIN_EMAILS') or '').split(','),
+        'version': '1.0.0'
+    })
 
 
 @api_bp.route('/profiles')

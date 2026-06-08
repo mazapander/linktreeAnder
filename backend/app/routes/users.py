@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 from app.auth import require_admin
 import supabase
 
-users_bp = Blueprint('users', __name__, url_prefix='/users')
+users_bp = Blueprint('users', __name__, url_prefix='/api/users')
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')

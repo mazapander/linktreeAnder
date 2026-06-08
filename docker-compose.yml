@@ -8,6 +8,10 @@ services:
       FLASK_ENV: production
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
     networks:
       - apps
     restart: unless-stopped
@@ -16,6 +20,10 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_SUPABASE_URL: ${SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+        VITE_ADMIN_EMAILS: ${ADMIN_EMAILS}
     container_name: linktree_frontend
     depends_on:
       - backend
